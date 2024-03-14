@@ -55,6 +55,7 @@ RUN echo "source ${KNOWROB_WS}/devel/setup.bash" >> ${HOME}/.bashrc
 USER ${NB_USER}
 # jupyterlab interface configuration
 COPY --chown=${NB_USER}:users binder/jupyter-settings.json /opt/conda/share/jupyter/lab/settings/overrides.json
+COPY --chown=${NB_USER}:users binder/webapps.json ${ROS_WS}/src/rvizweb/webapps/app.json
 
 # Entrypoint starting knowrob and mongodb
 COPY --chown=${NB_USER}:users binder/entrypoint.sh /
