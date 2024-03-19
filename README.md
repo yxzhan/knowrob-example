@@ -1,6 +1,6 @@
 # Knowrob examples
 
-[![Binder](https://binder.intel4coro.de/badge_logo.svg)](https://binder.intel4coro.de/v2/gh/yxzhan/knowrob-example.git/HEAD?labpath=tut2-semweb.ipynb)
+[![Binder](https://binder.intel4coro.de/badge_logo.svg)](https://binder.intel4coro.de/v2/gh/yxzhan/knowrob-example.git/HEAD?labpath=notebooks/tut2-semweb.ipynb)
 
 Running [Knowrob](https://www.knowrob.org/) with Jupyter notebook on Binderhub.
 

@@ -55,6 +55,7 @@ COPY --chown=${NB_USER}:users prolog /prolog
 USER ${NB_USER}
 WORKDIR ${ROS_WS}
 RUN catkin build
+#===========================================================#
 
 # Copy content to the image
 ENV REPO_DIR=${HOME}/work
