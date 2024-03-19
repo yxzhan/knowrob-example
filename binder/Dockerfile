@@ -55,6 +55,16 @@ COPY --chown=${NB_USER}:users prolog /prolog
 USER ${NB_USER}
 WORKDIR ${ROS_WS}
 RUN catkin build
+
+USER root
+RUN mkdir /neem_data && chown ${NB_USER}:users /neem_data
+USER ${NB_USER}
+RUN cd /neem_data && \
+    ln -s /neem_data ${HOME}/jupyter-knowrob/lectures/data && \
+    wget https://seafile.zfn.uni-bremen.de/f/b66a71b257084d459b6c/?dl=1 -O example_neem.zip && \
+    unzip example_neem.zip && \
+    mv example_neem/* ./ && \
+    rm -r example_neem example_neem.zip
 #===========================================================#
 
 # Copy content to the image
