@@ -11,7 +11,7 @@ Running [Knowrob](https://www.knowrob.org/) with Jupyter notebook on Binderhub.
 - Publications: https://www.knowrob.org/publications
 - Github: https://github.com/knowrob/knowrob
 - Jupyter extension: https://github.com/sasjonge/jupyter-knowrob
-- Notebooks: https://github.com/sasjonge/jupyter-knowrob/tree/master/lectures
+- Notebooks: https://github.com/sasjonge/ease_fs_neems_2021/tree/master/lectures
 
 ## Development
 

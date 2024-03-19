@@ -1,14 +1,21 @@
+# Dockerfile of the base image: https://github.com/IntEL4CoRo/docker-stacks/blob/master/Dockerfile
 FROM intel4coro/base-notebook:20.04-noetic
 
-# Install SWI Prolog
+# Path to the default ROS workspace
+ENV ROS_WS=${HOME}/workspace/ros
+
+#============= Install extra software packages =============#
+# Install SWI Prolog 
+# Source: https://www.swi-prolog.org/build/PPA.html
 USER root
 RUN apt install -y software-properties-common && \
-  apt-add-repository -y ppa:swi-prolog/stable
+    apt-add-repository -y ppa:swi-prolog/stable
 RUN apt update && \
-  apt install -y swi-prolog
+    apt install -y swi-prolog
 ENV SWI_HOME_DIR=/usr/lib/swi-prolog
 
 # Install MongoDB Community Edition
+# Source: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/#std-label-install-mdb-community-ubuntu
 ARG MONGODEB_VERSION=4.4
 RUN curl -fsSL https://www.mongodb.org/static/pgp/server-${MONGODEB_VERSION}.asc | \
     gpg -o /usr/share/keyrings/mongodb-server-${MONGODEB_VERSION}.gpg --dearmor
@@ -18,21 +25,21 @@ RUN apt update && apt install -y mongodb-org
 RUN mkdir -p /data/db && \
     chown -R ${NB_USER}:users /data/db 
 
-# Init Knowrob catkin workspace
+# Install Knowrob
+# Source: https://knowrob.github.io/knowrob/
 USER ${NB_USER}
-ENV KNOWROB_WS=${HOME}/workspace/knowrob
-RUN mkdir -p ${KNOWROB_WS}/src
-WORKDIR ${KNOWROB_WS}/src
-RUN wstool init && \
-    wstool merge https://raw.github.com/knowrob/knowrob/master/rosinstall/knowrob-base.rosinstall && \
+WORKDIR ${ROS_WS}/src
+RUN wstool merge https://raw.github.com/knowrob/knowrob/master/rosinstall/knowrob-base.rosinstall && \
     wstool update
 
 # Switch to root user to install ROS dependencies
+# Source: http://wiki.ros.org/rosdep
 USER root
 RUN rosdep update && rosdep install -y -r --ignore-src --from-paths . && \
     rosdep fix-permissions
 
 # Install jupyter knowrob kernel
+# Source: https://github.com/sasjonge/jupyter-knowrob
 USER ${NB_USER}
 WORKDIR ${HOME}
 RUN git clone https://github.com/sasjonge/jupyter-knowrob.git --recurse-submodules
@@ -40,26 +47,23 @@ RUN cd jupyter-knowrob && pip install .
 ARG JK_KERNEL=${HOME}/.local/share/jupyter/kernels/jknowrob
 RUN mkdir -p ${JK_KERNEL} && \
     cp jupyter-knowrob/kernel.json ${JK_KERNEL}
-RUN cp -R ${HOME}/jupyter-knowrob/knowrob_cloud ${KNOWROB_WS}/src/
-USER root
-RUN cp -R ${HOME}/jupyter-knowrob/prolog /
+RUN cp -R ${HOME}/jupyter-knowrob/knowrob_cloud ${ROS_WS}/src/
+COPY --chown=${NB_USER}:users prolog /prolog
 
 # Build catkin workspace
+# Source: https://catkin-tools.readthedocs.io/en/latest/verbs/catkin_build.html
 USER ${NB_USER}
-WORKDIR ${KNOWROB_WS}
-RUN source ${ROS_PATH}/setup.bash && catkin_make
+WORKDIR ${ROS_WS}
+RUN catkin build
 
-# Source knowrob workspace when a new bash shell opens
-RUN echo "source ${KNOWROB_WS}/devel/setup.bash" >> ${HOME}/.bashrc
+# Copy content to the image
+ENV REPO_DIR=${HOME}/work
+WORKDIR ${REPO_DIR}
+COPY --chown=${NB_USER}:users . ${REPO_DIR}/
 
-USER ${NB_USER}
-# jupyterlab interface configuration
-COPY --chown=${NB_USER}:users binder/jupyter-settings.json /opt/conda/share/jupyter/lab/settings/overrides.json
-COPY --chown=${NB_USER}:users binder/webapps.json ${ROS_WS}/src/rvizweb/webapps/app.json
+# Create a symbolic link to the ROS workspace under the working directory
+RUN ln -s ${ROS_WS} ${PWD}/ROS_WS
 
-# Entrypoint starting knowrob and mongodb
-COPY --chown=${NB_USER}:users binder/entrypoint.sh /
+# The entrypoint of the docker image
+COPY --chown=${NB_USER}:users binder/entrypoint.sh /entrypoint.sh
 ENTRYPOINT ["/entrypoint.sh"]
-
-WORKDIR ${HOME}/jupyter-knowrob/lectures
-RUN ln -s ${KNOWROB_WS} ${PWD}/KNOWROB_WS
