@@ -56,6 +56,7 @@ USER ${NB_USER}
 WORKDIR ${ROS_WS}
 RUN catkin build
 
+# Download the example neem data
 USER root
 RUN mkdir /neem_data && chown ${NB_USER}:users /neem_data
 USER ${NB_USER}
@@ -64,8 +65,6 @@ RUN cd /neem_data && \
     unzip example_neem.zip && \
     mv example_neem/* ./ && \
     rm -r example_neem example_neem.zip
-ENV REPO_DIR=${HOME}/work
-RUN ln -s /neem_data ${PWD}/neem_data
 #===========================================================#
 
 # Copy content to the image
