@@ -6,8 +6,8 @@ roslaunch --wait rvizweb rvizweb.launch &
 
 # Start MongoDB and save data on working directory
 MONGODB_URL=mongodb://127.0.0.1:27017
-mkdir -p ${PWD}/mongodb/data
-mongod --fork --logpath ${PWD}/mongodb/mongod.log --dbpath ${PWD}/mongodb/data
+# MongoDB will store data under directory /data/db
+mongod --fork --logpath ${PWD}/mongodb/mongod.log
 
 # Create a symbolic link to the folder neem_data
 ln -s /neem_data ${PWD}/neem_data
