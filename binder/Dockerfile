@@ -5,14 +5,31 @@ FROM intel4coro/base-notebook:20.04-noetic
 ENV ROS_WS=${HOME}/workspace/ros
 
 #============= Install extra software packages =============#
-# Install SWI Prolog 
+
+# Install Redland, Raptor2, libmongoc, spdlog, fmt
+# Source: https://github.com/knowrob/knowrob/blob/dev/docker/noetic_base.Dockerfile
+USER root
+RUN apt update && \
+    apt install -y \
+        gdb g++ clang cmake make doxygen \
+        libeigen3-dev \
+        libspdlog-dev \
+        libraptor2-dev \
+        librdf0 \
+        librdf0-dev \
+        libmongoc-1.0-0 \
+        libmongoc-dev \
+        libfmt-dev \
+        software-properties-common
+
+# Install SWI Prolog
 # Source: https://www.swi-prolog.org/build/PPA.html
 USER root
-RUN apt install -y software-properties-common && \
-    apt-add-repository -y ppa:swi-prolog/stable
+RUN apt-add-repository -y ppa:swi-prolog/stable
 RUN apt update && \
-    apt install -y swi-prolog
+    apt install -y swi-prolog*
 ENV SWI_HOME_DIR=/usr/lib/swi-prolog
+ENV LD_LIBRARY_PATH=/usr/lib/swi-prolog/lib/x86_64-linux:$LD_LIBRARY_PATH
 
 # Install MongoDB Community Edition
 # Source: https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/#std-label-install-mdb-community-ubuntu
@@ -23,14 +40,21 @@ RUN echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-${
     tee /etc/apt/sources.list.d/mongodb-org-${MONGODEB_VERSION}.list
 RUN apt update && apt install -y mongodb-org
 RUN mkdir -p /data/db && \
-    chown -R ${NB_USER}:users /data/db 
+    chown -R ${NB_USER}:users /data/db
 
 # Install Knowrob
 # Source: https://knowrob.github.io/knowrob/
 USER ${NB_USER}
 WORKDIR ${ROS_WS}/src
-RUN wstool merge https://raw.github.com/knowrob/knowrob/master/rosinstall/knowrob-base.rosinstall && \
-    wstool update
+# RUN wstool merge https://raw.github.com/knowrob/knowrob/master/rosinstall/knowrob-base.rosinstall && \
+#     wstool update
+RUN git clone https://github.com/knowrob/knowrob.git -b dev
+RUN cd knowrob && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make && \
+    make install
 
 # Switch to root user to install ROS dependencies
 # Source: http://wiki.ros.org/rosdep
