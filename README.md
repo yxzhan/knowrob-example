@@ -35,5 +35,5 @@ docker compose -f ./binder/docker-compose.yml down
 ### To force docker image rebuild from scratch
 
 ```bash
-docker compose -f ./binder/docker-compose.yml up --build --no-cache
+docker compose -f ./binder/docker-compose.yml build --no-cache
 ```
