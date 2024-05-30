@@ -92,9 +92,18 @@ RUN echo "source ${HOME}/knowrob/build/devel/local_setup.bash" >> ${HOME}/.bashr
 #     unzip example_neem.zip && \
 #     mv example_neem/* ./ && \
 #     rm -r example_neem example_neem.zip
+
+# Install MongoDB-Compass
+# Source: https://docs.mongodb.com/compass/master/install/
+USER root
+RUN wget -O /tmp/mongodb-compass.deb https://downloads.mongodb.com/compass/mongodb-compass_1.43.0_amd64.deb && \
+    dpkg -i /tmp/mongodb-compass.deb && \
+    rm  /tmp/mongodb-compass.deb
+
 #===========================================================#
 
 # Copy content to the image
+USER ${NB_USER}
 ENV REPO_DIR=${HOME}/work
 WORKDIR ${REPO_DIR}
 COPY --chown=${NB_USER}:users . ${REPO_DIR}/
