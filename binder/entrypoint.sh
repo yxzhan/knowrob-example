@@ -13,7 +13,7 @@ mongod --fork --logpath ${HOME}/mongod.log
 jupyter lab workspaces import ${PWD}/binder/jupyterlab.jupyterlab-workspace
 
 # Launch Knowrob
-# export KNOWROB_MONGODB_URI=${MONGODB_URL}/?appname=knowrob
-# roslaunch --wait knowrob knowrob.launch &
+export KNOWROB_MONGODB_URI=${MONGODB_URL}/?appname=knowrob
+roslaunch --wait knowrob knowrob.launch &
 
 exec "$@"

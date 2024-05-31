@@ -6,7 +6,7 @@ ENV ROS_WS=${HOME}/workspace/ros
 
 #============= Install extra software packages =============#
 
-# Install Redland, Raptor2, libmongoc, spdlog, fmt
+# Install Redland, Raptor2, libmongoc, spdlog, fmt, gtest
 # Source: https://github.com/knowrob/knowrob/blob/dev/docker/noetic_base.Dockerfile
 USER root
 RUN apt update && \
@@ -19,6 +19,7 @@ RUN apt update && \
         librdf0-dev \
         libmongoc-1.0-0 \
         libmongoc-dev \
+        libgtest-dev \
         libfmt-dev \
         software-properties-common
 
@@ -42,31 +43,15 @@ RUN apt update && apt install -y mongodb-org
 RUN mkdir -p /data/db && \
     chown -R ${NB_USER}:users /data/db
 
-# Install Knowrob
-# Source: https://knowrob.github.io/knowrob/
-USER ${NB_USER}
-WORKDIR ${HOME}
-RUN git clone https://github.com/knowrob/knowrob.git -b dev
-WORKDIR ${HOME}/knowrob
-RUN source ${ROS_WS}/devel/setup.bash && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make
-RUN pip install pyros-genmsg
+# Install MongoDB-Compass
+# Source: https://docs.mongodb.com/compass/master/install/
 USER root
-RUN cd build && make install
-RUN echo "source ${HOME}/knowrob/build/devel/local_setup.bash" >> ${HOME}/.bashrc
+RUN wget -O /tmp/mongodb-compass.deb https://downloads.mongodb.com/compass/mongodb-compass_1.43.0_amd64.deb && \
+    dpkg -i /tmp/mongodb-compass.deb && \
+    rm  /tmp/mongodb-compass.deb
 
-# Switch to root user to install ROS dependencies
-# Source: http://wiki.ros.org/rosdep
-# USER root
-# RUN rosdep update && \
-#     rosdep install -y -r --ignore-src --from-paths . && \
-#     rosdep fix-permissions
-
-# Install jupyter knowrob kernel
-# Source: https://github.com/sasjonge/jupyter-knowrob
+# # Install jupyter knowrob kernel
+# # Source: https://github.com/sasjonge/jupyter-knowrob
 # USER ${NB_USER}
 # WORKDIR ${HOME}
 # RUN git clone https://github.com/sasjonge/jupyter-knowrob.git --recurse-submodules
@@ -77,11 +62,43 @@ RUN echo "source ${HOME}/knowrob/build/devel/local_setup.bash" >> ${HOME}/.bashr
 # RUN cp -R ${HOME}/jupyter-knowrob/knowrob_cloud ${ROS_WS}/src/
 # COPY --chown=${NB_USER}:users prolog /prolog
 
+# Install Knowrob
+# Source: https://github.com/knowrob/knowrob
+USER ${NB_USER}
+# WORKDIR ${HOME}
+WORKDIR ${ROS_WS}/src
+# Since the .rosinstall file
+# https://github.com/knowrob/knowrob/blob/dev/rosinstall/knowrob-base.rosinstall
+# still fetching knowrob from master branch, 
+# Here clone the ROS dependencies repository manually
+# RUN git clone https://github.com/knowrob/rosprolog.git -b master
+# RUN git clone https://github.com/code-iai/iai_common_msgs.git -b master
+RUN git clone https://github.com/knowrob/knowrob.git -b dev
+WORKDIR ${ROS_WS}/src/knowrob
+RUN source ${ROS_WS}/devel/setup.bash && \
+    mkdir build && \
+    cd build && \
+    cmake .. && \
+    make
+RUN pip install pyros-genmsg
+USER root
+RUN cd build && make install
+USER ${NB_USER}
+RUN echo "source ${HOME}/knowrob/build/devel/setup.bash" >> ${HOME}/.bashrc
+
+# Switch to root user to install ROS dependencies
+# Source: http://wiki.ros.org/rosdep
+WORKDIR ${ROS_WS}
+USER root
+RUN rosdep update && \
+    rosdep install -y -r --ignore-src --from-paths . && \
+    rosdep fix-permissions
+
 # Build catkin workspace
 # Source: https://catkin-tools.readthedocs.io/en/latest/verbs/catkin_build.html
-# USER ${NB_USER}
-# WORKDIR ${ROS_WS}
-# RUN catkin build
+USER ${NB_USER}
+WORKDIR ${ROS_WS}
+RUN catkin build
 
 # Download the example neem data
 # USER root
@@ -92,14 +109,6 @@ RUN echo "source ${HOME}/knowrob/build/devel/local_setup.bash" >> ${HOME}/.bashr
 #     unzip example_neem.zip && \
 #     mv example_neem/* ./ && \
 #     rm -r example_neem example_neem.zip
-
-# Install MongoDB-Compass
-# Source: https://docs.mongodb.com/compass/master/install/
-USER root
-RUN wget -O /tmp/mongodb-compass.deb https://downloads.mongodb.com/compass/mongodb-compass_1.43.0_amd64.deb && \
-    dpkg -i /tmp/mongodb-compass.deb && \
-    rm  /tmp/mongodb-compass.deb
-
 #===========================================================#
 
 # Copy content to the image
@@ -110,8 +119,8 @@ COPY --chown=${NB_USER}:users . ${REPO_DIR}/
 
 # Create a symbolic link to the ROS workspace under the working directory
 RUN ln -s ${ROS_WS} ${PWD}/ROS_WS
-RUN ln -s ${HOME}/knowrob ${PWD}/knowrob
 # RUN ln -s /neem_data ${PWD}/neem_data
+RUN ln -s ${ROS_WS}/src/knowrob ${HOME}/knowrob
 
 # The entrypoint of the docker image
 COPY --chown=${NB_USER}:users binder/entrypoint.sh /entrypoint.sh
