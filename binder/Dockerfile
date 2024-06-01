@@ -98,7 +98,7 @@ RUN rosdep update && \
 # Source: https://catkin-tools.readthedocs.io/en/latest/verbs/catkin_build.html
 USER ${NB_USER}
 WORKDIR ${ROS_WS}
-RUN catkin build
+RUN catkin build -j 4
 
 # Download the example neem data
 # USER root
