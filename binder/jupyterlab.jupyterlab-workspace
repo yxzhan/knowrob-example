@@ -14,7 +14,7 @@
               "type": "tab-area",
               "currentIndex": 0,
               "widgets": [
-                "rviz-KnowRob:rviz-KnowRob"
+                "rviz-knowrob:rviz-knowrob"
               ]
             },
             {
@@ -59,7 +59,7 @@
     "file-browser-filebrowser:cwd": {
       "path": ""
     },
-    "rviz-KnowRob:rviz-KnowRob": {
+    "rviz-knowrob:rviz-knowrob": {
       "data": {}
     },
     "terminal:1": {
